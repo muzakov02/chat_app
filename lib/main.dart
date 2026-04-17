@@ -12,10 +12,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // ✅ Test uchun vaqtinchalik login
   await FirebaseAuth.instance.signInWithEmailAndPassword(
-    email: 'adxamjonyusupov@gmail.com',
-    password: 'test312456',
+    email: 'rustamaliyev@gamil.com',
+    password: 'test213456',
   );
 
   runApp(const MyApp());
@@ -32,7 +31,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MessageScreen(), // ✅ MessageScreen birinchi ochiladi
+      home: MessageScreen(),
+
+
     );
   }
 }

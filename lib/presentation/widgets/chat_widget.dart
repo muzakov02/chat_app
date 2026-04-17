@@ -24,7 +24,9 @@ class ChatWidget extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundImage: AssetImage(user.avatarUrl),
+                  backgroundImage: user.avatarUrl.isNotEmpty
+                      ? AssetImage(user.avatarUrl) as ImageProvider
+                      : const AssetImage('assets/images/avatar1.png'),
                 ),
                 if (user.isOnline)
                   Positioned(

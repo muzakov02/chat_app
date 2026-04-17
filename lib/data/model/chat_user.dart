@@ -23,9 +23,30 @@ class ChatUser {
       name: data['name'] ?? '',
       avatarUrl: data['avatarUrl'] ?? '',
       isOnline: data['isOnline'] ?? false,
-      lastMessage: data['lastMessage'] ?? '',
-      time: data['time'] ?? '',
-      unreadCount: data['unreadCount'] ?? 0,
+      lastMessage: '',
+      time: '',
+      unreadCount: 0,
+    );
+  }
+
+  // ✅ chats collection dan — lastMessage, time, unreadCount olish
+  factory ChatUser.fromChat({
+    required String id,
+    required String name,
+    required String avatarUrl,
+    required bool isOnline,
+    required String lastMessage,
+    required String time,
+    required int unreadCount,
+  }) {
+    return ChatUser(
+      id: id,
+      name: name,
+      avatarUrl: avatarUrl,
+      isOnline: isOnline,
+      lastMessage: lastMessage,
+      time: time,
+      unreadCount: unreadCount,
     );
   }
 }

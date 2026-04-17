@@ -10,20 +10,23 @@ class MessageScreen extends StatefulWidget {
   const MessageScreen({super.key});
 
   @override
-  State<MessageScreen> createState() => _ChatScreenState();
+  State<MessageScreen> createState() => _MessageScreenState();
 }
 
-class _ChatScreenState extends State<MessageScreen> {
+class _MessageScreenState extends State<MessageScreen> {
   String searchQuery = '';
+  final String currentUserId =
+      FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  Stream<List<ChatUser>> getUsers() {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  // ✅ chats collection dan o'qish
+  Stream<List<Map<String, dynamic>>> getChats() {
     return FirebaseFirestore.instance
-        .collection('users')
+        .collection('chats')
+        .where('participants', arrayContains: currentUserId)
+        .orderBy('lastMessageTime', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => ChatUser.fromFirestore(doc.data(), doc.id))
-        .where((user) => user.id != currentUserId)
+        .map((doc) => {'id': doc.id, ...doc.data()})
         .toList());
   }
 
@@ -57,34 +60,73 @@ class _ChatScreenState extends State<MessageScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: StreamBuilder<List<ChatUser>>(
-                stream: getUsers(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: getChats(),
                 builder: (context, snapshot) {
-                  // Loading
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  // Error
                   if (snapshot.hasError) {
                     return Center(child: Text('Xatolik: ${snapshot.error}'));
                   }
 
-                  // Filter by search
-                  final users = (snapshot.data ?? [])
-                      .where((u) => u.name
-                      .toLowerCase()
-                      .contains(searchQuery.toLowerCase()))
-                      .toList();
+                  final chats = snapshot.data ?? [];
 
-                  if (users.isEmpty) {
-                    return const Center(child: Text('Foydalanuvchi topilmadi'));
+                  if (chats.isEmpty) {
+                    return const Center(child: Text('Hali chatlar yo\'q'));
                   }
 
+                  final filtered = chats.where((chat) {
+                    final names = Map<String, dynamic>.from(
+                        chat['participantNames'] ?? {});
+                    final otherName = names.entries
+                        .firstWhere(
+                          (e) => e.key != currentUserId,
+                      orElse: () => MapEntry('', ''),
+                    )
+                        .value
+                        .toString()
+                        .toLowerCase();
+                    return otherName.contains(searchQuery.toLowerCase());
+                  }).toList();
+
                   return ListView.builder(
-                    itemCount: users.length,
+                    itemCount: filtered.length,
                     itemBuilder: (context, index) {
+                      final chat = filtered[index];
+
+                      final participants =
+                      List<String>.from(chat['participants'] ?? []);
+                      final otherUserId = participants.firstWhere(
+                            (id) => id != currentUserId,
+                        orElse: () => '',
+                      );
+
+                      final names = Map<String, dynamic>.from(
+                          chat['participantNames'] ?? {});
+                      final avatars = Map<String, dynamic>.from(
+                          chat['participantAvatars'] ?? {});
+                      final unreadCount =
+                      (chat['unreadFor_$currentUserId'] ?? 0) as int;
+                      final lastMessage = chat['lastMessage'] ?? '';
+                      final lastTime =
+                      chat['lastMessageTime'] as Timestamp?;
+                      final timeStr = lastTime != null
+                          ? '${lastTime.toDate().toLocal().hour}:${lastTime.toDate().toLocal().minute.toString().padLeft(2, '0')}'
+                          : '';
+
+                      final otherUser = ChatUser(
+                        id: otherUserId,
+                        name: names[otherUserId] ?? '',
+                        avatarUrl: avatars[otherUserId] ?? '',
+                        isOnline: false,
+                        lastMessage: lastMessage,
+                        time: timeStr,
+                        unreadCount: unreadCount,
+                      );
+
                       return Dismissible(
-                        key: Key(users[index].id),
+                        key: Key(chat['id']),
                         direction: DismissDirection.endToStart,
                         background: Container(
                           alignment: Alignment.centerRight,
@@ -99,17 +141,18 @@ class _ChatScreenState extends State<MessageScreen> {
                         ),
                         onDismissed: (_) {
                           FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(users[index].id)
+                              .collection('chats')
+                              .doc(chat['id'])
                               .delete();
                         },
                         child: ChatWidget(
-                          user: users[index],
+                          user: otherUser,
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => ChatScreen(user: users[index]),
+                                builder: (_) =>
+                                    ChatScreen(user: otherUser),
                               ),
                             );
                           },

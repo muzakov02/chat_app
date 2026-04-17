@@ -57,14 +57,12 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     try {
-      // 1. Xabarni saqlash
       await FirebaseFirestore.instance
           .collection('chats')
           .doc(_chatId)
           .collection('messages')
           .add(message.toMap());
 
-      // 2. Chat doc yangilash
       await FirebaseFirestore.instance.collection('chats').doc(_chatId).set({
         'lastMessage': trimmed,
         'lastMessageTime': Timestamp.now(),
@@ -73,25 +71,7 @@ class _ChatScreenState extends State<ChatScreen> {
         // ✅ boshqa user uchun
       }, SetOptions(merge: true));
 
-      // 3. Boshqa user — unreadCount oshadi ✅
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.user.id) // ← boshqa user
-          .update({
-            'lastMessage': trimmed,
-            'time': timeStr,
-            'unreadCount': FieldValue.increment(1),
-          });
 
-      // 4. Men — faqat lastMessage yangilanadi, unreadCount OSHMAYDI ✅
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUserId) // ← men
-          .update({
-            'lastMessage': trimmed,
-            'time': timeStr,
-            // ❌ 'unreadCount' bu yerda bo'lmasligi kerak!
-          });
 
       _scrollToBottom();
     } catch (e) {
@@ -121,12 +101,68 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadCurrentUser();
-    _resetUnreadCount();
+    _initChatDocument().then((_) => _resetUnreadCount());
+
+  }
+  Future<void> _initChatDocument() async {
+    final chatDoc = await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(_chatId)
+        .get();
+
+    final currentUserDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_currentUserId)
+        .get();
+
+    // ✅ Boshqa userni ham users dan olamiz
+    final otherUserDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.user.id)
+        .get();
+
+    final currentUserName = currentUserDoc.data()?['name'] ?? '';
+    final currentUserAvatar = currentUserDoc.data()?['avatarUrl'] ?? '';
+
+    // ✅ widget.user.name bo'sh bo'lsa users dan olamiz
+    final otherUserName = widget.user.name.isNotEmpty
+        ? widget.user.name
+        : (otherUserDoc.data()?['name'] ?? '');
+    final otherUserAvatar = widget.user.avatarUrl.isNotEmpty
+        ? widget.user.avatarUrl
+        : (otherUserDoc.data()?['avatarUrl'] ?? '');
+
+    final existingNames = Map<String, dynamic>.from(
+        chatDoc.data()?['participantNames'] ?? {});
+    final existingAvatars = Map<String, dynamic>.from(
+        chatDoc.data()?['participantAvatars'] ?? {});
+
+    if (existingNames[_currentUserId]?.isEmpty ?? true) {
+      existingNames[_currentUserId] = currentUserName;
+    }
+    if (existingAvatars[_currentUserId]?.isEmpty ?? true) {
+      existingAvatars[_currentUserId] = currentUserAvatar;
+    }
+    if (existingNames[widget.user.id]?.isEmpty ?? true) {
+      existingNames[widget.user.id] = otherUserName; // ✅
+    }
+    if (existingAvatars[widget.user.id]?.isEmpty ?? true) {
+      existingAvatars[widget.user.id] = otherUserAvatar; // ✅
+    }
+
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(_chatId)
+        .set({
+      'participants': [_currentUserId, widget.user.id],
+      'participantNames': existingNames,
+      'participantAvatars': existingAvatars,
+    }, SetOptions(merge: true));
   }
 
   Future<void> _resetUnreadCount() async {
     await FirebaseFirestore.instance.collection('chats').doc(_chatId).update({
-      'unreadFor_$_currentUserId': 0, // ✅ faqat men uchun nollash
+      'unreadFor_$_currentUserId': 0,
     });
   }
 
@@ -152,7 +188,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        titleSpacing: 0, // ✅ title spacing ni kamaytirish
+        titleSpacing: 0,
         title: Text(
           widget.user.name,
           style: const TextStyle(
@@ -185,13 +221,12 @@ class _ChatScreenState extends State<ChatScreen> {
             itemBuilder: (context) => [
               PopupMenuItem(
                 onTap: () {
-                  // ✅ Ovozli qo'ng'iroq
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => CallPage(
-                        callID: _chatId, // ✅ ikki user orasidagi unique ID
-                        isVideoCall: false, // ✅ audio
+                        callID: _chatId,
+                        isVideoCall: false,
                       ),
                     ),
                   );
@@ -208,13 +243,12 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               PopupMenuItem(
                 onTap: () {
-                  // ✅ Video qo'ng'iroq
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => CallPage(
                         callID: _chatId,
-                        isVideoCall: true, // ✅ video
+                        isVideoCall: true,
                       ),
                     ),
                   );
@@ -290,7 +324,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// ✅ Xabar bubble widget
+
 class _MessageBubble extends StatelessWidget {
   final Message message;
   final bool isMe;
@@ -317,7 +351,12 @@ class _MessageBubble extends StatelessWidget {
             : MainAxisAlignment.start,
         children: [
           if (!isMe) ...[
-            CircleAvatar(radius: 16, backgroundImage: AssetImage(avatarUrl)),
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: avatarUrl.isNotEmpty
+                  ? AssetImage(avatarUrl) as ImageProvider
+                  : const AssetImage('assets/images/avatar1.png'),
+            ),
             const SizedBox(width: 6),
           ],
 
@@ -362,7 +401,12 @@ class _MessageBubble extends StatelessWidget {
 
           if (isMe) ...[
             const SizedBox(width: 6),
-            CircleAvatar(radius: 16, backgroundImage: AssetImage(myAvatarUrl)),
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: myAvatarUrl.isNotEmpty
+                  ? AssetImage(myAvatarUrl) as ImageProvider
+                  : const AssetImage('assets/images/avatar1.png'),
+            ),
           ],
         ],
       ),
