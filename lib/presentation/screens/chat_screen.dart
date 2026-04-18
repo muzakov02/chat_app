@@ -117,7 +117,7 @@ class _ChatScreenState extends State<ChatScreen> {
         .doc(_currentUserId)
         .get();
 
-    // ✅ Boshqa userni ham users dan olamiz
+
     final otherUserDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.user.id)
@@ -126,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentUserName = currentUserDoc.data()?['name'] ?? '';
     final currentUserAvatar = currentUserDoc.data()?['avatarUrl'] ?? '';
 
-    // ✅ widget.user.name bo'sh bo'lsa users dan olamiz
+
     final otherUserName = widget.user.name.isNotEmpty
         ? widget.user.name
         : (otherUserDoc.data()?['name'] ?? '');
@@ -437,7 +437,7 @@ class _MessageBubble extends StatelessWidget {
               Text(
                 '${localTime.hour}:${localTime.minute.toString().padLeft(2, '0')}',
                 style: const TextStyle(
-                  color: Color(0xFF9CA4AB), // ✅ har ikkalasi uchun bir xil rang
+                  color: Color(0xFF9CA4AB),
                   fontSize: 11,
                 ),
               ),

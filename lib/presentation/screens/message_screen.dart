@@ -19,7 +19,7 @@ class _MessageScreenState extends State<MessageScreen> {
   final String currentUserId =
       FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  // ✅ chats collection dan o'qish
+
   Stream<List<Map<String, dynamic>>> getChats() {
     return FirebaseFirestore.instance
         .collection('chats')

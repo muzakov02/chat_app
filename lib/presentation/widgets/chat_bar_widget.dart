@@ -1,5 +1,7 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'attachment_sheet.dart';
 
@@ -36,18 +38,31 @@ class _ChatBarWidgetState extends State<ChatBarWidget> {
     _controller.clear();
   }
   void _showAttachmentSheet() {
+    final picker = ImagePicker();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: 310,
-        width: 336,
-        margin: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: const AttachmentSheet(),
+      builder: (_) => AttachmentSheet(
+        // ✅ callbacklarni tashqaridan beramiz
+        onCamera: () async {
+          final photo = await picker.pickImage(source: ImageSource.camera);
+          if (photo != null) debugPrint('Kamera: ${photo.path}');
+        },
+        onGallery: () async {
+          final image = await picker.pickImage(source: ImageSource.gallery);
+          if (image != null) debugPrint('Galereya: ${image.path}');
+        },
+        onDocument: () async {
+          final result = await FilePicker.platform.pickFiles(type: FileType.any);
+          if (result != null) debugPrint('Dokument: ${result.files.single.path}');
+        },
+        onAudio: () async {
+          final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+          if (result != null) debugPrint('Audio: ${result.files.single.path}');
+        },
+        onLocation: () => debugPrint('Manzil'),
+        onContact: () => debugPrint('Kontakt'),
       ),
     );
   }

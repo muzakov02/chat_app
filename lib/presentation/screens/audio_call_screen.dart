@@ -56,14 +56,14 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
 
     _signalingService.onRemoteStream = (stream) {
       setState(() => _isConnected = true);
-      _startTimer(); // ✅ boshqa user qabul qilganda — stream keladi
+      _startTimer();
     };
 
     _signalingService.onCallEnded = () {
       if (mounted) Navigator.pop(context);
     };
 
-    // ✅ Status o'zgarishini tinglash
+
     if (widget.isCaller) {
       FirebaseFirestore.instance
           .collection('calls')
@@ -72,7 +72,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
           .listen((snap) {
         if (snap.data()?['status'] == 'answered' && !_isConnected) {
           setState(() => _isConnected = true);
-          _startTimer(); // ✅ qabul qilindi — timer boshlaydi
+          _startTimer();
         }
       });
     }
@@ -82,12 +82,12 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
         callId: widget.callId,
         callerId: FirebaseAuth.instance.currentUser!.uid,
         receiverId: widget.remoteUser.id,
-        isVideo: false, // audio call
+        isVideo: false,
       );
     } else {
       await _signalingService.answerCall(
         callId: widget.callId,
-        isVideo: false, // audio call
+        isVideo: false,
       );
     }
   }
@@ -105,7 +105,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     });
   }
 
-  // ✅ Real speaker
+
   void _toggleSpeaker() async {
     setState(() => _isSpeakerOn = !_isSpeakerOn);
     await Helper.setSpeakerphoneOn(_isSpeakerOn);
@@ -120,7 +120,6 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Back button — qo'ng'iroqni tugatish
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -157,12 +156,11 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
           ),
           child: Stack(
             children: [
-              // ✅ User info — markazda
               Center(
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 158.0),
+                      padding: const EdgeInsets.only(top: 234.0),
                       child: CircleAvatar(
                         radius: 35,
                         backgroundImage: widget.remoteUser.avatarUrl.isNotEmpty
@@ -170,13 +168,16 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                             : const AssetImage('assets/images/avatar1.png'),
                       ),
                     ),
-                    const SizedBox(height: 250),
-                    Text(
-                      widget.remoteUser.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
+
+                    Padding(
+                      padding: const EdgeInsets.only(top: 215.0),
+                      child: Text(
+                        widget.remoteUser.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -192,36 +193,46 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                 ),
               ),
 
-              // ✅ Tugmalar — pastda
               Positioned(
-                bottom: 60,
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _CallButton(
-                      icon: _isMuted ? Icons.mic_off : Icons.mic,
-                      color: Colors.white24,
-                      onTap: _toggleMute,
-                    ),
-                    _CallButton(
-                      icon: Icons.call_end,
-                      color: Colors.red,
-                      onTap: _endCall,
-                      size: 64,
-                    ),
-                    // ✅ Real speaker tugmasi
-                    _CallButton(
-                      icon: _isSpeakerOn ? Icons.volume_up : Icons.volume_off,
-                      color: _isSpeakerOn
-                          ? Colors.white
-                          : Colors.white24,
-                      onTap: _toggleSpeaker,
-                    ),
-                  ],
+                bottom: 40,
+                left: 30,
+                right: 30,
+                child: Container(
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // ✅ Mikrofon
+                      _CallButton(
+                        svgPath: _isSpeakerOn
+                            ? 'assets/icons/audio_onn.svg'
+                            : 'assets/icons/audio_off.svg',
+                        onTap: _toggleSpeaker,
+                      ),
+
+
+                      _CallButton(
+                        svgPath: 'assets/icons/call_off.svg',
+                        onTap: _endCall,
+                        size: 64,
+                      ),
+
+                      // ✅ Speaker
+                      _CallButton(
+                        svgPath: _isMuted
+                            ? 'assets/icons/mikrafon_off.svg'
+                            : 'assets/icons/mikrafon_on.svg',
+                        onTap: _toggleMute,
+                      ),
+                    ],
+                  ),
                 ),
               ),
+
             ],
           ),
         ),
@@ -230,15 +241,14 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
   }
 }
 
+
 class _CallButton extends StatelessWidget {
-  final IconData icon;
-  final Color color;
+  final String svgPath;
   final VoidCallback onTap;
   final double size;
 
   const _CallButton({
-    required this.icon,
-    required this.color,
+    required this.svgPath,
     required this.onTap,
     this.size = 56,
   });
@@ -247,14 +257,10 @@ class _CallButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SvgPicture.asset(
+        svgPath,
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.white, size: size * 0.45),
       ),
     );
   }

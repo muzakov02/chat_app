@@ -2,11 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 class AttachmentSheet extends StatelessWidget {
-  const AttachmentSheet({super.key});
+  final VoidCallback onCamera;
+  final VoidCallback onGallery;
+  final VoidCallback onDocument;
+  final VoidCallback onAudio;
+  final VoidCallback onLocation;
+  final VoidCallback onContact;
+
+  const AttachmentSheet({
+    super.key,
+    required this.onCamera,
+    required this.onGallery,
+    required this.onDocument,
+    required this.onAudio,
+    required this.onLocation,
+    required this.onContact,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -30,25 +50,21 @@ class AttachmentSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-
-          // 1-qator
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _attachItem('assets/icons/document_icon.svg', 'Dakument'),
-              _attachItem('assets/icons/camera_icon.svg', 'Kamera'),
-              _attachItem('assets/icons/gallery_icon.svg', 'Galareya'),
+              _attachItem(context, 'assets/icons/document_icon.svg', 'Dakument', onDocument),
+              _attachItem(context, 'assets/icons/camera_icon.svg', 'Kamera', onCamera),
+              _attachItem(context, 'assets/icons/gallery_icon.svg', 'Galareya', onGallery),
             ],
           ),
           const SizedBox(height: 24),
-
-          // 2-qator
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _attachItem('assets/icons/audio_icon.svg', 'Audio'),
-              _attachItem('assets/icons/location_icon.svg', 'Manzil'),
-              _attachItem('assets/icons/contact_icon.svg', 'Kontakt'),
+              _attachItem(context, 'assets/icons/audio_icon.svg', 'Audio', onAudio),
+              _attachItem(context, 'assets/icons/location_icon.svg', 'Manzil', onLocation),
+              _attachItem(context, 'assets/icons/contact_icon.svg', 'Kontakt', onContact),
             ],
           ),
           const SizedBox(height: 16),
@@ -57,21 +73,19 @@ class AttachmentSheet extends StatelessWidget {
     );
   }
 
-  Widget _attachItem(String iconPath, String label) {
-    return Column(
-      children: [
-        SvgPicture.asset(
-          iconPath,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF111111),
-          ),
-        ),
-      ],
+  Widget _attachItem(BuildContext context, String iconPath, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      child: Column(
+        children: [
+          SvgPicture.asset(iconPath),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF111111))),
+        ],
+      ),
     );
   }
 }
