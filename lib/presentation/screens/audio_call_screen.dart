@@ -162,7 +162,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 70.0),
+                      padding: const EdgeInsets.only(top: 158.0),
                       child: CircleAvatar(
                         radius: 35,
                         backgroundImage: widget.remoteUser.avatarUrl.isNotEmpty
