@@ -38,11 +38,17 @@ class _ChatBarWidgetState extends State<ChatBarWidget> {
   void _showAttachmentSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        height: 310,
+        width: 336,
+        margin: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const AttachmentSheet(),
       ),
-      builder: (_) => const AttachmentSheet(), // ✅ alohida widget
     );
   }
 

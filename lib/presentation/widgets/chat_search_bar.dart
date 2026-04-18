@@ -18,13 +18,25 @@ class ChatSearchBar extends StatefulWidget {
 
 class _ChatSearchBarState extends State<ChatSearchBar> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   Timer? _debounceTimer;
   bool _hasText = false;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ focus o'zgarganda rebuild
+    _focusNode.addListener(() {
+      setState(() => _isFocused = _focusNode.hasFocus);
+    });
+  }
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
     _controller.dispose();
+    _focusNode.dispose(); // ✅ qo'shildi
     super.dispose();
   }
 
@@ -41,7 +53,6 @@ class _ChatSearchBarState extends State<ChatSearchBar> {
     _onChanged('');
   }
 
-
   Widget _divider() {
     return Container(
       width: 1,
@@ -54,14 +65,18 @@ class _ChatSearchBarState extends State<ChatSearchBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
+      height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F8FE),
+        color: _isFocused
+            ? Colors.white
+            : const Color(0xFFF6F8FE),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFAEAEAE),
-          width: 0.5,
+          color: _isFocused
+              ? const Color(0xFF56CB01)
+              : Colors.transparent,
+          width: 1.5,
         ),
       ),
       child: Row(
@@ -72,12 +87,12 @@ class _ChatSearchBarState extends State<ChatSearchBar> {
             height: 18,
           ),
           const SizedBox(width: 8),
-
-          // TextField
           Expanded(
             child: TextField(
               controller: _controller,
+              focusNode: _focusNode, // ✅ qo'shildi
               onChanged: _onChanged,
+              cursorColor: const Color(0xFF56CB01), // ✅ yashil cursor
               style: const TextStyle(
                 color: Color(0xFF333333),
                 fontSize: 14,
@@ -91,7 +106,6 @@ class _ChatSearchBarState extends State<ChatSearchBar> {
               ),
             ),
           ),
-
           if (_hasText) ...[
             GestureDetector(
               onTap: _clear,
@@ -104,7 +118,6 @@ class _ChatSearchBarState extends State<ChatSearchBar> {
             const SizedBox(width: 8),
           ],
           _divider(),
-
           SvgPicture.asset(
             'assets/icons/filter.svg',
             width: 18,

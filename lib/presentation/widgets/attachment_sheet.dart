@@ -12,7 +12,6 @@ class AttachmentSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sarlavha + yopish
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
