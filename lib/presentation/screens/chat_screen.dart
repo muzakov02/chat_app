@@ -505,11 +505,11 @@ class CallMenu extends StatelessWidget {
             child: Row(
               children: [
                 SvgPicture.asset('assets/icons/video.svg', width: 18, height: 18,
-                  colorFilter: const ColorFilter.mode(Color(0xFF111111), BlendMode.srcIn),
+
                 ),
                 const SizedBox(width: 8),
                 const Text('Video',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111111)),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF56CB01)),
                 ),
               ],
             ),
