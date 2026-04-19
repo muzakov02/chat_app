@@ -286,12 +286,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         SvgPicture.asset(
                           'assets/icons/video.svg',
-                          width: 18,
-                          height: 18,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFF111111),
-                            BlendMode.srcIn,
-                          ),
+
+
                         ),
                         const SizedBox(width: 8),
                         const Text(
@@ -299,7 +295,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF111111),
+                            color: Color(0xFF56CB01),
                           ),
                         ),
                       ],
