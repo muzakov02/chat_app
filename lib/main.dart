@@ -1,11 +1,13 @@
-import 'dart:math';
+import 'dart:async';
 
+import 'package:chat_app/presentation/screens/incoming_call_screen.dart';
 import 'package:chat_app/presentation/screens/message_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 
+import 'data/model/chat_user.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -20,49 +22,88 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription? _callSubscription;
+  final Set<String> _shownCallIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _listenForIncomingCalls();
+  }
+
+  void _listenForIncomingCalls() {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) return;
+
+    _callSubscription = FirebaseFirestore.instance
+        .collection('calls')
+        .where('receiverId', isEqualTo: currentUserId)
+        .where('status', isEqualTo: 'calling')
+        .snapshots()
+        .listen((snapshot) async {
+      for (final change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final callId = change.doc.id;
+
+          // ✅ Ikki marta ko'rsatmaslik
+          if (_shownCallIds.contains(callId)) continue;
+          _shownCallIds.add(callId);
+
+          final data = change.doc.data()!;
+          final callerId = data['callerId'];
+          final isVideo = data['isVideo'] ?? false;
+
+          final callerDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(callerId)
+              .get();
+
+          if (!callerDoc.exists) return;
+
+          final caller = ChatUser.fromFirestore(
+              callerDoc.data()!, callerDoc.id);
+
+          _navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => IncomingCallScreen(
+                caller: caller,
+                callId: callId,
+                isVideo: isVideo,
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _callSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey, // ✅
       title: 'Chat App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: MessageScreen(),
-
-
+      home:  MessageScreen(),
     );
   }
 }
 
-String userID = Random().nextInt(1000).toString();
 
-class CallPage extends StatelessWidget {
-  const CallPage({
-    super.key,
-    required this.callID,
-    required this.isVideoCall,
-  });
-
-  final String callID;
-  final bool isVideoCall;
-
-  @override
-  Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser!;
-
-    return ZegoUIKitPrebuiltCall(
-      appID: 530905604,
-      appSign: '887b318795819e2bd3a0e1b54492364cbf3fd33e752a590591de4aaf421d728a',
-      userID: currentUser.uid,
-      userName: currentUser.email ?? '',
-      callID: callID,
-      config: isVideoCall
-          ? ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()  // ✅ video
-          : ZegoUIKitPrebuiltCallConfig.oneOnOneVoiceCall(), // ✅ audio
-    );
-  }
-}
