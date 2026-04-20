@@ -58,7 +58,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
         .collection('calls')
         .doc(widget.callId)
         .update({'status': 'ended'});
-    if (mounted) Navigator.maybePop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   // ✅ Qabul qilish — call_on

@@ -25,50 +25,56 @@ class AttachmentSheet extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Attachment File',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF111111),
-                ),
+      // padding: const EdgeInsets.all(24),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 18.0, right: 18.0,top: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Attachment File',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF111111),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.close, color: Color(0xFF111111)),
+                  ),
+                ],
               ),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close, color: Color(0xFF111111)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _attachItem(context, 'assets/icons/document_icon.svg', 'Dakument', onDocument),
-              _attachItem(context, 'assets/icons/camera_icon.svg', 'Kamera', onCamera),
-              _attachItem(context, 'assets/icons/gallery_icon.svg', 'Galareya', onGallery),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _attachItem(context, 'assets/icons/audio_icon.svg', 'Audio', onAudio),
-              _attachItem(context, 'assets/icons/location_icon.svg', 'Manzil', onLocation),
-              _attachItem(context, 'assets/icons/contact_icon.svg', 'Kontakt', onContact),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _attachItem(context, 'assets/icons/document_icon.svg', 'Dakument', onDocument),
+                _attachItem(context, 'assets/icons/camera_icon.svg', 'Kamera', onCamera),
+                _attachItem(context, 'assets/icons/gallery_icon.svg', 'Galareya', onGallery),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _attachItem(context, 'assets/icons/audio_icon.svg', 'Audio', onAudio),
+                _attachItem(context, 'assets/icons/location_icon.svg', 'Manzil', onLocation),
+                _attachItem(context, 'assets/icons/contact_icon.svg', 'Kontakt', onContact),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

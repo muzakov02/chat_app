@@ -236,11 +236,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   height: 24,
                 ),
                 onSelected: (value) {
+                  final callId = FirebaseFirestore.instance.collection('calls').doc().id;
+
                   if (value == 'audio') {
                     Navigator.push(context, MaterialPageRoute(
                       builder: (_) => AudioCallScreen(
                         remoteUser: widget.user,
-                        callId: _chatId,
+                        callId: callId, // ✅ yangi ID
                         isCaller: true,
                       ),
                     ));
@@ -248,7 +250,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     Navigator.push(context, MaterialPageRoute(
                       builder: (_) => VideoCallScreen(
                         remoteUser: widget.user,
-                        callId: _chatId,
+                        callId: callId, // ✅ yangi ID
                         isCaller: true,
                       ),
                     ));

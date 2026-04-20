@@ -15,8 +15,8 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await FirebaseAuth.instance.signInWithEmailAndPassword(
-    email: 'adxamjonyusupov@gmail.com',
-    password: 'test312456',
+    email: 'rustamaliyev@gamil.com',
+    password: 'test213456',
   );
 
   runApp(const MyApp());

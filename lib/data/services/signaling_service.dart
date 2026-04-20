@@ -43,9 +43,15 @@ class SignalingService {
 
     pc.onConnectionState = (state) {
       if (_isDisposed) return; // ✅
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected ||
-          state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
-        onCallEnded?.call();
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
+        // 5 soniya kutib, hali ham disconnected bo'lsa — tugatamiz
+        Future.delayed(const Duration(seconds: 5), () {
+          if (_isDisposed) return;
+          if (_peerConnection?.connectionState ==
+              RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
+            onCallEnded?.call();
+          }
+        });
       }
     };
 
