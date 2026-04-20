@@ -28,8 +28,9 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
   bool _isMuted = false;
   bool _isSpeakerOn = false;
   bool _isConnected = false;
+  bool _timerStarted = false;
+  bool _disposed = false;
 
-  // ✅ Timer
   Timer? _timer;
   int _seconds = 0;
 
@@ -40,9 +41,17 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
   }
 
   void _startTimer() {
+    if (_timerStarted) return;
+    _timerStarted = true;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _seconds++);
     });
+  }
+
+  void _setConnected() {
+    if (_isConnected || _disposed) return;
+    setState(() => _isConnected = true);
+    _startTimer();
   }
 
   @override
@@ -55,44 +64,51 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     _signalingService.onLocalStream = (stream) {};
 
     _signalingService.onRemoteStream = (stream) {
-      setState(() => _isConnected = true);
-      _startTimer();
+      if (!_disposed) _setConnected();
     };
 
     _signalingService.onCallEnded = () {
       if (mounted) Navigator.pop(context);
     };
 
-
     if (widget.isCaller) {
-      FirebaseFirestore.instance
+      try {
+        await _signalingService.startCall(
+          callId: widget.callId,
+          callerId: FirebaseAuth.instance.currentUser!.uid,
+          receiverId: widget.remoteUser.id,
+          isVideo: false,
+        );
+      } catch (e) {
+        debugPrint('startCall xatosi: $e');
+        if (mounted) Navigator.pop(context);
+      }
+    } else {
+      final callDoc = await FirebaseFirestore.instance
           .collection('calls')
           .doc(widget.callId)
-          .snapshots()
-          .listen((snap) {
-        if (snap.data()?['status'] == 'answered' && !_isConnected) {
-          setState(() => _isConnected = true);
-          _startTimer();
-        }
-      });
-    }
+          .get();
 
-    if (widget.isCaller) {
-      await _signalingService.startCall(
-        callId: widget.callId,
-        callerId: FirebaseAuth.instance.currentUser!.uid,
-        receiverId: widget.remoteUser.id,
-        isVideo: false,
-      );
-    } else {
-      await _signalingService.answerCall(
-        callId: widget.callId,
-        isVideo: false,
-      );
+      final status = callDoc.data()?['status'];
+      if (status == 'ended') {
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+
+      try {
+        await _signalingService.answerCall(
+          callId: widget.callId,
+          isVideo: false,
+        );
+      } catch (e) {
+        debugPrint('answerCall xatosi: $e');
+        if (mounted) Navigator.pop(context);
+      }
     }
   }
 
   Future<void> _endCall() async {
+    if (_disposed) return;
     _timer?.cancel();
     await _signalingService.endCall(widget.callId);
     if (mounted) Navigator.pop(context);
@@ -105,7 +121,6 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     });
   }
 
-
   void _toggleSpeaker() async {
     setState(() => _isSpeakerOn = !_isSpeakerOn);
     await Helper.setSpeakerphoneOn(_isSpeakerOn);
@@ -113,6 +128,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     _signalingService.dispose();
     super.dispose();
@@ -127,26 +143,22 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Color(0xFF56CB01),
+          backgroundColor: const Color(0xFF56CB01),
           elevation: 0,
           leading: Padding(
-            padding: const EdgeInsets.only(top: 16.0,left: 16),
-            child: SvgPicture.asset(
-              'assets/icons/back_white.svg',
-              width: 24,
-            ),
+            padding: const EdgeInsets.only(top: 16.0, left: 16),
+            child: SvgPicture.asset('assets/icons/back_white.svg', width: 24),
           ),
           actions: [
             Padding(
-              padding: const EdgeInsets.only(top: 16.0,right: 16),
-              child: SvgPicture.asset(
-                'assets/icons/message-text.svg',
-                width: 24,
-              ),
+              padding: const EdgeInsets.only(top: 16.0, right: 16),
+              child: SvgPicture.asset('assets/icons/message-text.svg', width: 24),
             ),
           ],
         ),
         body: Container(
+          width: double.infinity,
+          height: double.infinity,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -156,11 +168,11 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
           ),
           child: Stack(
             children: [
-              Center(
+              Positioned.fill(
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 234.0),
+                      padding: const EdgeInsets.only(top: 158.0),
                       child: CircleAvatar(
                         radius: 35,
                         backgroundImage: widget.remoteUser.avatarUrl.isNotEmpty
@@ -168,9 +180,8 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                             : const AssetImage('assets/images/avatar1.png'),
                       ),
                     ),
-
                     Padding(
-                      padding: const EdgeInsets.only(top: 215.0),
+                      padding: const EdgeInsets.only(top: 283.0),
                       child: Text(
                         widget.remoteUser.name,
                         style: const TextStyle(
@@ -181,12 +192,11 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // ✅ Real timer
                     Text(
                       _isConnected ? _timeString : 'Ulanmoqda...',
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 14,
+                        fontSize: 16,
                       ),
                     ),
                   ],
@@ -204,35 +214,40 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                     borderRadius: BorderRadius.circular(40),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // ✅ Mikrofon
-                      _CallButton(
-                        svgPath: _isSpeakerOn
-                            ? 'assets/icons/audio_onn.svg'
-                            : 'assets/icons/audio_off.svg',
-                        onTap: _toggleSpeaker,
+                      Expanded(
+                        child: Center(
+                          child: _CallButton(
+                            svgPath: _isSpeakerOn
+                                ? 'assets/icons/audio_onn.svg'
+                                : 'assets/icons/audio_off.svg',
+                            onTap: _toggleSpeaker,
+                          ),
+                        ),
                       ),
-
-
-                      _CallButton(
-                        svgPath: 'assets/icons/call_off.svg',
-                        onTap: _endCall,
-                        size: 64,
+                      Expanded(
+                        child: Center(
+                          child: _CallButton(
+                            svgPath: 'assets/icons/call_off.svg',
+                            onTap: _endCall,
+                            size: 64,
+                          ),
+                        ),
                       ),
-
-                      // ✅ Speaker
-                      _CallButton(
-                        svgPath: _isMuted
-                            ? 'assets/icons/mikrafon_off.svg'
-                            : 'assets/icons/mikrafon_on.svg',
-                        onTap: _toggleMute,
+                      Expanded(
+                        child: Center(
+                          child: _CallButton(
+                            svgPath: _isMuted
+                                ? 'assets/icons/mikrafon_off.svg'
+                                : 'assets/icons/mikrafon_on.svg',
+                            onTap: _toggleMute,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-
             ],
           ),
         ),
@@ -240,7 +255,6 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     );
   }
 }
-
 
 class _CallButton extends StatelessWidget {
   final String svgPath;
@@ -257,11 +271,7 @@ class _CallButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: SvgPicture.asset(
-        svgPath,
-        width: size,
-        height: size,
-      ),
+      child: SvgPicture.asset(svgPath, width: size, height: size),
     );
   }
 }
