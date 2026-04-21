@@ -219,7 +219,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                         child: Center(
                           child: _CallButton(
                             svgPath: _isSpeakerOn
-                                ? 'assets/icons/audio_onn.svg'
+                                ? 'assets/icons/audio_icon.svg'
                                 : 'assets/icons/audio_off.svg',
                             onTap: _toggleSpeaker,
                           ),

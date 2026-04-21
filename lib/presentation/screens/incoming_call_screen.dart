@@ -6,7 +6,7 @@ import 'package:flutter_svg/svg.dart';
 
 import '../../data/model/chat_user.dart';
 import 'audio_call_screen.dart';
-import 'chat_screen.dart'; // ✅ chat screen importi
+import 'chat_screen.dart';
 import 'video_call_screen.dart';
 
 class IncomingCallScreen extends StatefulWidget {

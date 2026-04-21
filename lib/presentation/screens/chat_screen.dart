@@ -1,5 +1,4 @@
 import 'package:chat_app/data/model/message.dart';
-import 'package:chat_app/main.dart';
 import 'package:chat_app/presentation/screens/video_call_screen.dart';
 import 'package:chat_app/presentation/widgets/chat_bar_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
