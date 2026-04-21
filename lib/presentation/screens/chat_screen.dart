@@ -81,15 +81,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(
+        _scrollController.position.maxScrollExtent,
+      );
+    }
   }
 
   @override
@@ -188,7 +184,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor:  Colors.transparent,
+        elevation: 0,
         centerTitle: true,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         titleSpacing: 0,
         title: Padding(
           padding: const EdgeInsets.only(top: 16.0),
@@ -308,59 +308,65 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
           ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<List<Message>>(
-              stream: _getMessages(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Xatolik yuz berdi'));
-                }
-
-                final messages = snapshot.data ?? [];
-
-                if (messages.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'Hali xabar yo\'q',
-                      style: TextStyle(color: Color(0xFF9CA4AB)),
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.only(
-                    left: 24.0,
-                    top: 26.0,
-                    right: 24.0
-                  ),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final isMe = message.senderId == _currentUserId;
-                    return _MessageBubble(
-                      message: message,
-                      isMe: isMe,
-                      avatarUrl: widget.user.avatarUrl,
-                      myAvatarUrl: currentUser?.avatarUrl ?? '',
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<List<Message>>(
+                stream: _getMessages(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Xatolik yuz berdi'));
+                  }
+        
+                  final messages = snapshot.data ?? [];
+        
+                  if (messages.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'Hali xabar yo\'q',
+                        style: TextStyle(color: Color(0xFF9CA4AB)),
+                      ),
                     );
-                  },
-                );
-              },
-            ),
-          ),
+                  }
 
-          // ✅ Chat bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: ChatBarWidget(onSendPressed: _sendMessage),
-          ),
-        ],
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _scrollToBottom();
+                  });
+        
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.only(
+                      left: 24.0,
+                      top: 26.0,
+                      right: 24.0
+                    ),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      final isMe = message.senderId == _currentUserId;
+                      return _MessageBubble(
+                        message: message,
+                        isMe: isMe,
+                        avatarUrl: widget.user.avatarUrl,
+                        myAvatarUrl: currentUser?.avatarUrl ?? '',
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+        
+            // ✅ Chat bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: ChatBarWidget(onSendPressed: _sendMessage),
+            ),
+          ],
+        ),
       ),
     );
   }

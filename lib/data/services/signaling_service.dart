@@ -44,7 +44,6 @@ class SignalingService {
     pc.onConnectionState = (state) {
       if (_isDisposed) return; // ✅
       if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
-        // 5 soniya kutib, hali ham disconnected bo'lsa — tugatamiz
         Future.delayed(const Duration(seconds: 5), () {
           if (_isDisposed) return;
           if (_peerConnection?.connectionState ==
@@ -175,7 +174,6 @@ class SignalingService {
     await _peerConnection!.setLocalDescription(answer);
     if (_isDisposed) return; // ✅
 
-    // ✅ Faqat shu yerda 'answered' ga yangilanadi
     await _firestore.collection('calls').doc(callId).update({
       'answer': {'type': answer.type, 'sdp': answer.sdp},
       'status': 'answered',
